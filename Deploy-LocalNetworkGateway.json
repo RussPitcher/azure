@@ -1,0 +1,41 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+      "localGatewaySubnet": {
+         "defaultValue": "192.168.168.0/24",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the local gateway in CIDR format"
+         }
+      },
+      "localGatewayAddress": {
+         "defaultValue": "123.123.123.123",
+         "type": "String",
+         "metadata": {
+            "description": "The IP address for the local gateway"
+         }
+      }
+   },
+   "variables": {
+      "localNetworkGateway": {
+         "name": "local-gateway",
+         "address": "[parameters('localGatewayAddress')]",
+         "subnet": "[parameters('localGatewaySubnet')]"
+      }
+   },
+   "resources": [
+      {
+         "type": "Microsoft.Network/localNetworkGateways",
+         "name": "[variables('localNetworkGateway').name]",
+         "apiVersion": "2015-06-15",
+         "location": "[resourceGroup().location]",
+         "properties": {
+            "localNetworkAddressSpace": {
+               "addressPrefixes": "[variables('localNetworkGateway').subnet]"
+            },
+            "gatewayIpAddress": "[variables('localNetworkGateway').address]"
+         }
+      }
+   ]
+}

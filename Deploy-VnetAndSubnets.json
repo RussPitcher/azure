@@ -1,0 +1,186 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+      "virtualNetwork": {
+         "defaultValue": "10.20.0.0/16",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the Virtual Network in CIDR format"
+         }
+      },
+      "mgtSubnet": {
+         "defaultValue": "10.20.1.0/24",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the Management subnet in CIDR format"
+         }
+      },
+      "backendSubnet": {
+         "defaultValue": "10.20.2.0/24",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the Back-end subnet in CIDR format"
+         }
+      },
+      "appSubnet": {
+         "defaultValue": "10.20.3.0/24",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the App subnet in CIDR format"
+         }
+      },
+      "frontendSubnet": {
+         "defaultValue": "10.20.4.0/24",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the Front-end subnet in CIDR format"
+         }
+      }
+   },
+   "variables": {
+      "virtualNetwork": {
+         "name": "virtual-network",
+         "subnet": "[parameters('virtualNetwork')]"
+      },
+      "appSubnet": {
+         "name": "app-subnet",
+         "subnet": "[parameters('appSubnet')]"
+      },
+      "mgtSubnet": {
+         "name": "mgt-subnet",
+         "subnet": "[parameters('mgtSubnet')]"
+      },
+      "backendSubnet": {
+         "name": "backend-subnet",
+         "subnet": "[parameters('backendSubnet')]"
+      },
+      "frontendSubnet": {
+         "name": "frontend-subnet",
+         "subnet": "[parameters('frontendSubnet')]"
+      }
+   },
+   "resources": [
+      {
+         "comments": "",
+         "type": "Microsoft.Network/networkSecurityGroups",
+         "name": "[concat(variables('appSubnet').name, '-group')]",
+         "apiVersion": "2016-03-30",
+         "location": "[resourceGroup().location]",
+         "properties": {
+            "securityRules": []
+         },
+         "resources": [],
+         "dependsOn": []
+      },
+      {
+         "comments": "",
+         "type": "Microsoft.Network/networkSecurityGroups",
+         "name": "[concat(variables('backendSubnet').name, '-group')]",
+         "apiVersion": "2016-03-30",
+         "location": "[resourceGroup().location]",
+         "properties": {
+            "securityRules": []
+         },
+         "resources": [],
+         "dependsOn": []
+      },
+      {
+         "comments": "",
+         "type": "Microsoft.Network/networkSecurityGroups",
+         "name": "[concat(variables('frontendSubnet').name, '-group')]",
+         "apiVersion": "2016-03-30",
+         "location": "[resourceGroup().location]",
+         "properties": {
+            "securityRules": []
+         },
+         "resources": [],
+         "dependsOn": []
+      },
+      {
+         "comments": "",
+         "type": "Microsoft.Network/networkSecurityGroups",
+         "name": "[concat(variables('mgtSubnet').name, '-group')]",
+         "apiVersion": "2016-03-30",
+         "location": "[resourceGroup().location]",
+         "properties": {
+            "securityRules": [
+               {
+                  "name": "RemoteDesktop",
+                  "properties": {
+                     "protocol": "Tcp",
+                     "sourcePortRange": "*",
+                     "destinationPortRange": "3389",
+                     "sourceAddressPrefix": "*",
+                     "destinationAddressPrefix": "*",
+                     "access": "Allow",
+                     "priority": 100,
+                     "direction": "Inbound"
+                  }
+               }
+            ]
+         },
+         "resources": [],
+         "dependsOn": []
+      },
+      {
+         "comments": "",
+         "type": "Microsoft.Network/virtualNetworks",
+         "name": "[variables('virtualNetwork').name]",
+         "apiVersion": "2016-03-30",
+         "location": "[resourceGroup().location]",
+         "properties": {
+            "addressSpace": {
+               "addressPrefixes": [
+                  "[variables('virtualNetwork').subnet]"
+               ]
+            },
+            "subnets": [
+               {
+                  "name": "[variables('mgtSubnet').name]",
+                  "properties": {
+                     "addressPrefix": "[variables('mgtSubnet').subnet]",
+                     "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('mgtSubnet').name, '-group'))]"
+                     }
+                  }
+               },
+               {
+                  "name": "[variables('backendSubnet').name]",
+                  "properties": {
+                     "addressPrefix": "[variables('backendSubnet').subnet]",
+                     "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('backendSubnet').name, '-group'))]"
+                     }
+                  }
+               },
+               {
+                  "name": "[variables('appSubnet').name]",
+                  "properties": {
+                     "addressPrefix": "[variables('appSubnet').subnet]",
+                     "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('appSubnet').name, '-group'))]"
+                     }
+                  }
+               },
+               {
+                  "name": "[variables('frontendSubnet').name]",
+                  "properties": {
+                     "addressPrefix": "[variables('frontendSubnet').subnet]",
+                     "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('frontendSubnet').name, '-group'))]"
+                     }
+                  }
+               }
+            ]
+         },
+         "resources": [],
+         "dependsOn": [
+            "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('mgtSubnet').name, '-group'))]",
+            "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('backendSubnet').name, '-group'))]",
+            "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('appSubnet').name, '-group'))]",
+            "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('frontendSubnet').name, '-group'))]"
+         ]
+      }
+   ]
+}

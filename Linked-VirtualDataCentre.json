@@ -1,0 +1,192 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+      "virtualNetwork": {
+         "defaultValue": "10.20.0.0/16",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the Virtual Network in CIDR format"
+         }
+      },
+      "gatewaySubnet": {
+         "defaultValue": "10.20.0.0/28",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the Gateway subnet in CIDR format"
+         }
+      },
+      "mgtSubnet": {
+         "defaultValue": "10.20.1.0/24",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the Management subnet in CIDR format"
+         }
+      },
+      "backendSubnet": {
+         "defaultValue": "10.20.2.0/24",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the Back-end subnet in CIDR format"
+         }
+      },
+      "appSubnet": {
+         "defaultValue": "10.20.3.0/24",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the App subnet in CIDR format"
+         }
+      },
+      "frontendSubnet": {
+         "defaultValue": "10.20.4.0/24",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the Front-end subnet in CIDR format"
+         }
+      },
+      "localGatewaySubnet": {
+         "defaultValue": "192.168.168.0/24",
+         "type": "string",
+         "metadata": {
+            "description": "The address space of the local gateway in CIDR format"
+         }
+      },
+      "localGatewayAddress": {
+         "defaultValue": "123.123.123.123",
+         "type": "String",
+         "metadata": {
+            "description": "The IP address for the local gateway"
+         }
+      }
+   },
+   "variables": {
+      "virtualNetwork": {
+         "name": "virtual-network",
+         "subnet": "[parameters('virtualNetwork')]"
+      },
+      "publicIpAddress": {
+         "name": "public-address",
+         "allocationMethod": "dynamic"
+      },
+      "gatewaySubnet": {
+         "name": "gatewaySubnet",
+         "subnet": "[parameters('gatewaySubnet')]"
+      },
+      "appSubnet": {
+         "name": "app-subnet",
+         "subnet": "[parameters('appSubnet')]"
+      },
+      "mgtSubnet": {
+         "name": "mgt-subnet",
+         "subnet": "[parameters('mgtSubnet')]"
+      },
+      "backendSubnet": {
+         "name": "backend-subnet",
+         "subnet": "[parameters('backendSubnet')]"
+      },
+      "frontendSubnet": {
+         "name": "frontend-subnet",
+         "subnet": "[parameters('frontendSubnet')]"
+      },
+      "virtualNetworkGateway": {
+         "name": "virtual-gateway",
+         "sku": "Standard",
+         "gatewayType": "Vpn",
+         "vpnType": "RouteBased"
+      },
+      "localNetworkGateway": {
+         "name": "local-gateway",
+         "address": "[parameters('localGatewayAddress')]",
+         "subnet": "[parameters('localGatewaySubnet')]"
+      }
+   },
+   "resources": [
+      {
+         "comments": "",
+         "type": "Microsoft.Network/publicIPAddresses",
+         "name": "[variables('publicIpAddress').name]",
+         "apiVersion": "2016-03-30",
+         "location": "[resourceGroup().location]",
+         "properties": {
+            "publicIPAllocationMethod": "[variables('publicIpAddress').allocationMethod]",
+            "idleTimeoutInMinutes": 4
+         },
+         "resources": [],
+         "dependsOn": []
+      },
+      {
+         "apiVersion": "2015-01-01", 
+         "name": "linkedTemplate", 
+         "type": "Microsoft.Resources/deployments", 
+         "properties": { 
+          "mode": "incremental", 
+          "templateLink": {
+            "uri": "Deploy-VnetAndSubnets.json",
+            "contentVersion": "1.0.0.0"
+          }, 
+          "parameters": { 
+            "virtualNetwork": {
+               "value": "[variables('virtualNetwork').subnet]"
+            },
+            "mgtSubnet": {
+               "value": "[variables('mgtSubnet').subnet]"
+            },
+            "backendSubnet": {
+               "value": "[variables('backendSubnet').subnet]"
+            },
+            "appSubnet": {
+               "value": "[variables('appSubnet').subnet]"
+            },
+            "frontendSubnet": {
+               "value": "[variables('frontendSubnet').subnet]"
+            }
+          } 
+         } 
+      },
+      {
+         "type": "Microsoft.Network/virtualNetworkGateways",
+         "name": "[variables('virtualNetworkGateway').name]",
+         "apiVersion": "2015-06-15",
+         "location": "[resourceGroup().location]",
+         "properties": {
+            "gatewayType": "[variables('virtualNetworkGateway').gatewayType]",
+            "ipConfigurations": [
+               {
+                  "name": "default",
+                  "properties": {
+                     "privateIPAllocationMethod": "Dynamic",
+                     "subnet": {
+                        "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetwork').name), '/subnets/', variables('gatewaySubnet').name)]"
+                     },
+                     "publicIpAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddress').name)]"
+                     }
+                  }
+               }
+            ],
+            "enableBgp": false,
+            "vpnType": "[variables('virtualNetworkGateway').vpnType]",
+            "sku": {
+               "name": "[variables('virtualNetworkGateway').sku]",
+               "tier": "[variables('virtualNetworkGateway').sku]"
+            }
+         },
+         "dependsOn": [
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpAddress').name)]",
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetwork').name)]"
+         ]
+      },
+      {
+         "type": "Microsoft.Network/localNetworkGateways",
+         "name": "[variables('localNetworkGateway').name]",
+         "apiVersion": "2015-06-15",
+         "location": "[resourceGroup().location]",
+         "properties": {
+            "localNetworkAddressSpace": {
+               "addressPrefixes": "[variables('localNetworkGateway').subnet]"
+            },
+            "gatewayIpAddress": "[variables('localNetworkGateway').address]"
+         }
+      }
+   ]
+}

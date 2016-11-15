@@ -1,0 +1,30 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+      "virtualNetwork": {
+         "value": "10.66.0.0/16"
+      },
+      "gatewaySubnet": {
+         "value": "10.66.0.0/28"
+      },
+      "mgtSubnet": {
+         "value": "10.66.1.0/24"
+      },
+      "backendSubnet": {
+         "value": "10.66.2.0/24"
+      },
+      "appSubnet": {
+         "value": "10.66.3.0/24"
+      },
+      "frontendSubnet": {
+         "value": "10.66.4.0/24"
+      },
+      "localGatewaySubnet": {
+         "value": "192.168.55.0/24"
+      },
+      "localGatewayAddress": {
+         "value": "124.124.124.124"
+      }
+   }
+}
