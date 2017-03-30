@@ -1,8 +1,8 @@
 "----- Downloading MARSAgent.exe"
-$DownloadObj = New-Object System.Net.Webclient
+#$DownloadObj = New-Object System.Net.Webclient
 $DestinationPath = "C:\MARSAgent.exe"
 $SourcePath = "http://aka.ms/azurebackup_agent"
-$DownloadObj.DownloadFile($SourcePath, $DestinationPath)
+#$DownloadObj.DownloadFile($SourcePath, $DestinationPath)
 
 Write-Verbose "----- Unnecessary verbose message"
 try {
